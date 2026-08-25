@@ -1,0 +1,60 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-debug-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Install npm dependencies
+        run: npm install
+
+      - name: Add Android platform
+        run: npx cap add android
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - name: Assemble debug APK
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Verify APK and record exact size
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk="android/app/build/outputs/apk/debug/app-debug.apk"
+          test -f "$apk"
+          bytes=$(stat -c '%s' "$apk")
+          printf 'apk_path=%s\napk_bytes=%s\n' "$apk" "$bytes" | tee build-metadata.txt
+          sha256sum "$apk" | tee -a build-metadata.txt
+
+      - name: Upload APK and verification metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: symmetry-debug-apk
+          path: |
+            android/app/build/outputs/apk/debug/app-debug.apk
+            build-metadata.txt
+          if-no-files-found: error
