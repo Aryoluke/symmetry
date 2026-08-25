@@ -1,73 +1,18 @@
 # Symmetry
 
-Symmetry is a privacy-first, AI-ready glow-up and **lock-in** tracker. Turn small daily promises into a visible game loop: complete quests, check in, earn XP, build a streak, and climb through ranks.
+A private, offline-first training system for GitHub Pages and Capacitor. The app is a single vanilla JavaScript codebase in `www/` and has no runtime dependencies or network calls.
 
-The MVP is one dependency-light JavaScript codebase:
+## Features
 
-- A static web app in `www/`, deployable to GitHub Pages.
-- A Capacitor shell that can package the same `www/` app as an Android APK.
-- Local-only persistence with `localStorage`—no account or backend required.
-- An AI Coach surface that currently uses deterministic, local guidance and is ready for a future API integration.
+- Dark modern minimalist interface with green accent, responsive mobile layout, and dark/light toggle.
+- LocalStorage persistence for profile, deterministic body scan, plan, workout logs, XP, streaks, achievements, photos, measurements, settings, and backups.
+- Body Scan onboarding accepts a camera/upload photo or selected muscle groups. A deterministic local engine identifies three strongest and three priority muscle groups and generates a goal/equipment-aware nine-week plan.
+- 100+ exercise library across muscle groups, including weighted movements and calisthenics progressions: pull-ups, push-ups, dips, muscle-ups, front lever, planche, handstand, core, mobility, and more.
+- Set/rep/weight logging, supersets, rest timer, offline operation, progressive overload suggestions, daily plan checkoff, weekly focus, and plan bonus XP.
+- Gamification: XP, levels/ranks, streak widget, achievements, exercise levels, shareable challenge code, social workout/achievement cards, and leaderboard placeholder.
+- Progress: local progress photos with comparison, measurements, weight entries, volume chart, and muscle development map.
+- AI Coach tab with deterministic local coaching replies and daily motivation; JSON export/import.
 
-## MVP loop
+## Run and test
 
-1. Complete optional focus quests for bonus XP.
-2. Tap **Complete daily check-in** once per day to earn 100 XP.
-3. Check-in days in a row to grow your streak.
-4. Every 100 XP advances your level and updates your rank.
-5. Refresh or reopen the app—your progress remains on the device.
-
-## Run the web app
-
-The app is intentionally static. Open `www/index.html` directly for a quick preview, or serve it locally for a realistic browser environment:
-
-```bash
-npm install
-npm run dev
-```
-
-Then visit the local URL printed by `serve`.
-
-## GitHub Pages
-
-The included workflow at `.github/workflows/pages.yml` publishes `www/` on pushes to `main`. In the repository settings, set **Pages → Source** to **GitHub Actions**. The app has no build step, so the Pages artifact is the `www/` directory itself.
-
-## Build an Android APK with Capacitor
-
-Prerequisites: Node.js 18+, Android Studio, an Android SDK, and a configured `ANDROID_HOME`.
-
-```bash
-npm install
-npm run cap:add:android   # first time only; creates the android/ project
-npm run cap:sync
-npm run apk:debug
-```
-
-The debug APK is generated at:
-
-```text
-android/app/build/outputs/apk/debug/app-debug.apk
-```
-
-To open the native project in Android Studio:
-
-```bash
-npm run cap:open:android
-```
-
-After changing files in `www/`, run `npm run cap:sync` again before rebuilding.
-
-## Project structure
-
-```text
-www/
-  index.html
-  main.js
-  styles.css
-capacitor.config.json
-package.json
-```
-
-## Privacy and roadmap
-
-Symmetry stores progress locally in the browser or app WebView. The next AI step can replace the local coach prompt generator with a user-selected provider while keeping the same UI contract and avoiding unnecessary personal data collection.
+Open `www/index.html` directly or serve the repository root with any static server. GitHub Pages continues to use `.github/workflows/pages.yml`; Capacitor continues to use `capacitor.config.json` and `www/` as its web directory. The app is intentionally local-only and does not provide medical or image-analysis claims.
