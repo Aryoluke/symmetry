@@ -7,10 +7,37 @@
 <meta name="description" content="Symmetry — a private, local-first training system.">
 <title>Symmetry — Train with intent.</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles.css?v=4">
 </head>
 <body>
+<script>
+(function () {
+  var pending = [];
+  function show(message) {
+    pending.push('Symmetry could not start: ' + message);
+    flush();
+  }
+  function flush() {
+    var app = document.getElementById('app');
+    if (!app || !pending.length) return;
+    app.textContent = pending.join('\n');
+    pending = [];
+  }
+  window.addEventListener('error', function (event) {
+    show(event.error && event.error.message || event.message || 'Unknown error');
+  });
+  window.addEventListener('unhandledrejection', function (event) {
+    var reason = event.reason;
+    show(reason && reason.message || String(reason || 'Unknown promise rejection'));
+  });
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', flush, { once: true });
+  } else {
+    flush();
+  }
+}());
+</script>
 <div id="app" aria-live="polite"></div><div id="toast" role="status"></div>
-<script src="main.js" defer></script>
+<script src="main.js?v=4" defer></script>
 </body>
 </html>

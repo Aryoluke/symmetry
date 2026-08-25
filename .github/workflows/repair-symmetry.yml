@@ -1,0 +1,119 @@
+name: Repair Symmetry browser files
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: "!contains(github.event.head_commit.message, '[skip repair]')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Repair JavaScript source remotely
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('www/main.js')
+          text = path.read_text(encoding='utf-8')
+
+          # Remove only escaped brackets in JavaScript code. Brackets inside
+          # quoted strings and regular-expression literals are left untouched.
+          out = []
+          i = 0
+          state = 'code'
+          quote = ''
+          regex_class = False
+          regex_allowed = True
+          while i < len(text):
+              ch = text[i]
+              if state == 'code':
+                  if ch in "'\\\"`":
+                      state, quote = 'string', ch
+                      out.append(ch)
+                      i += 1
+                      continue
+                  if ch == '/' and i + 1 < len(text) and text[i + 1] == '/':
+                      state = 'line_comment'
+                      out.append('//')
+                      i += 2
+                      continue
+                  if ch == '/' and i + 1 < len(text) and text[i + 1] == '*':
+                      state = 'block_comment'
+                      out.append('/*')
+                      i += 2
+                      continue
+                  if ch == '/' and regex_allowed:
+                      state = 'regex'
+                      regex_class = False
+                      out.append(ch)
+                      i += 1
+                      continue
+                  if ch == '\\' and i + 1 < len(text) and text[i + 1] in '[]':
+                      out.append(text[i + 1])
+                      i += 2
+                      regex_allowed = False
+                      continue
+                  out.append(ch)
+                  if not ch.isspace():
+                      regex_allowed = ch in '([{=,:;!&|?+-*%^~<>'
+                  i += 1
+                  continue
+              if state == 'string':
+                  out.append(ch)
+                  if ch == '\\\\' and i + 1 < len(text):
+                      out.append(text[i + 1])
+                      i += 2
+                      continue
+                  if ch == quote:
+                      state = 'code'
+                      regex_allowed = False
+                  i += 1
+                  continue
+              if state == 'regex':
+                  out.append(ch)
+                  if ch == '\\\\' and i + 1 < len(text):
+                      out.append(text[i + 1])
+                      i += 2
+                      continue
+                  if ch == '[':
+                      regex_class = True
+                  elif ch == ']' and regex_class:
+                      regex_class = False
+                  elif ch == '/' and not regex_class:
+                      state = 'code'
+                      regex_allowed = False
+                  i += 1
+                  continue
+              if state == 'line_comment':
+                  out.append(ch)
+                  i += 1
+                  if ch == '\\n':
+                      state, regex_allowed = 'code', True
+                  continue
+              out.append(ch)
+              i += 1
+              if text[i - 2:i] == '*/':
+                  state, regex_allowed = 'code', True
+
+          text = ''.join(out)
+          marker = 'bind();\\nrender();'
+          if marker not in text:
+              raise SystemExit('startup marker not found')
+          helper = """function showStartupError(error){const message=error&&error.message?error.message:String(error);const app=document.querySelector('#app');if(app)app.textContent='Symmetry could not start: '+message;}\ntry{bind();render();}catch(error){showStartupError(error);}"""
+          text = text.replace(marker, helper, 1)
+          path.write_text(text, encoding='utf-8')
+          Path('.github/workflows/repair-symmetry.yml').unlink()
+          PY
+      - name: Commit repaired files
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A www/main.js .github/workflows/repair-symmetry.yml
+          git diff --cached --quiet || git commit -m "Repair startup handling [skip repair]"
+          git push
