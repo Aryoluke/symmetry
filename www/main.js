@@ -1,132 +1,62 @@
-const STORAGE_KEY = "symmetry-state-v1";
-
-const quests = [
-  { id: "body", icon: "◒", title: "Move your body", xp: 20 },
-  { id: "mind", icon: "◌", title: "Clear your mind", xp: 20 },
-  { id: "space", icon: "⌂", title: "Reset your space", xp: 20 }
-];
-
-const ranks = [
-  { name: "Seedling", minLevel: 1 },
-  { name: "Focused", minLevel: 3 },
-  { name: "Rising", minLevel: 6 },
-  { name: "Radiant", minLevel: 10 },
-  { name: "Limitless", minLevel: 20 }
-];
-
-const todayKey = () => {
-  const date = new Date();
-  const offset = date.getTimezoneOffset() * 60000;
-  return new Date(date.getTime() - offset).toISOString().slice(0, 10);
-};
-
-const yesterdayKey = () => {
-  const date = new Date();
-  date.setDate(date.getDate() - 1);
-  const offset = date.getTimezoneOffset() * 60000;
-  return new Date(date.getTime() - offset).toISOString().slice(0, 10);
-};
-
-const initialState = () => ({
-  xp: 0,
-  streak: 0,
-  level: 1,
-  lastCheckIn: null,
-  totalCheckIns: 0,
-  questDate: todayKey(),
-  completedQuests: []
-});
-
-let state;
-try {
-  state = { ...initialState(), ...JSON.parse(localStorage.getItem(STORAGE_KEY) || "null") };
-} catch {
-  state = initialState();
-}
-
-function save() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-}
-
-function currentRank(level) {
-  return [...ranks].reverse().find((rank) => level >= rank.minLevel) || ranks[0];
-}
-
-function refreshLevel() {
-  state.level = Math.floor(state.xp / 100) + 1;
-}
-
-function resetQuestDayIfNeeded() {
-  if (state.questDate !== todayKey()) {
-    state.questDate = todayKey();
-    state.completedQuests = [];
-    save();
-  }
-}
-
-function coachMessage() {
-  if (state.lastCheckIn === todayKey()) return `You showed up today. Protect the ${state.streak}-day streak by keeping tomorrow beautifully simple.`;
-  if (state.streak >= 7) return "A week of evidence is powerful. Keep the promise small and let consistency do the heavy lifting.";
-  if (state.totalCheckIns === 0) return "You do not need a perfect day. You only need one honest next step.";
-  return "Your next level is one small action away. What would make the next 10 minutes count?";
-}
-
-function render() {
-  resetQuestDayIfNeeded();
-  refreshLevel();
-  const rank = currentRank(state.level);
-  const nextRank = ranks.find((item) => item.minLevel > state.level) || { name: "Limitless", minLevel: state.level + 1 };
-  const progress = state.xp % 100;
-  const checkedIn = state.lastCheckIn === todayKey();
-
-  document.querySelector("#level-value").textContent = state.level;
-  document.querySelector("#rank-value").textContent = rank.name;
-  document.querySelector("#streak-value").textContent = state.streak;
-  document.querySelector("#xp-value").textContent = state.xp;
-  document.querySelector("#next-rank").textContent = nextRank.name;
-  document.querySelector("#progress-text").textContent = `${progress} / 100 XP`;
-  document.querySelector("#progress-fill").style.width = `${progress}%`;
-  document.querySelector("#coach-message").textContent = coachMessage();
-
-  const checkinButton = document.querySelector("#checkin-button");
-  const checkinMessage = document.querySelector("#checkin-message");
-  checkinButton.disabled = checkedIn;
-  checkinButton.innerHTML = checkedIn ? "Checked in for today <span>✓</span>" : "Complete daily check-in <span>→</span>";
-  checkinMessage.textContent = checkedIn
-    ? "That is today's promise kept. Come back tomorrow to keep your chain alive."
-    : "One intentional action is enough to keep the chain alive.";
-
-  const questList = document.querySelector("#quest-list");
-  questList.innerHTML = quests.map((quest) => {
-    const done = state.completedQuests.includes(quest.id);
-    return `<article class="quest ${done ? "done" : ""}">
-      <div class="quest-top"><span class="quest-emoji">${quest.icon}</span><span class="quest-xp">+${quest.xp} XP</span></div>
-      <h3>${quest.title}</h3>
-      <button type="button" data-quest="${quest.id}" ${done ? "disabled" : ""}>${done ? "Completed ✓" : "Mark complete"}</button>
-    </article>`;
-  }).join("");
-  document.querySelector("#quest-count").textContent = `${state.completedQuests.length} / ${quests.length} done`;
-}
-
-document.querySelector("#checkin-button").addEventListener("click", () => {
-  if (state.lastCheckIn === todayKey()) return;
-  state.streak = state.lastCheckIn === yesterdayKey() ? state.streak + 1 : 1;
-  state.lastCheckIn = todayKey();
-  state.totalCheckIns += 1;
-  state.xp += 100;
-  save();
-  render();
-});
-
-document.querySelector("#quest-list").addEventListener("click", (event) => {
-  const button = event.target.closest("button[data-quest]");
-  if (!button || button.disabled) return;
-  const quest = quests.find((item) => item.id === button.dataset.quest);
-  if (!quest || state.completedQuests.includes(quest.id)) return;
-  state.completedQuests.push(quest.id);
-  state.xp += quest.xp;
-  save();
-  render();
-});
-
-render();
+const KEY='symmetry-state-v2';
+const GROUPS=['Chest','Back','Shoulders','Arms','Core','Quads','Hamstrings','Glutes','Calves','Hip flexors','Grip','Mobility'];
+const GOALS=['Muscle gain','Strength','Calisthenics','Fat loss'];
+const EQUIPMENT=['Gym','Home','Calisthenics'];
+const QUOTES=['Consistency is a quiet form of confidence.','Make today useful, not perfect.','Strong is built one honest rep at a time.','The plan works when you return to it.','Leave a little evidence that you showed up.'];
+const GROUP_EXERCISES={
+Chest:['Barbell bench press','Incline dumbbell press','Dumbbell floor press','Cable chest fly','Machine chest press','Push-ups','Diamond push-ups','Archer push-ups','Pseudo planche push-ups','Ring push-ups'],
+Back:['Deadlift','Barbell row','One-arm dumbbell row','Lat pulldown','Seated cable row','Pull-ups','Chin-ups','Archer pull-ups','Muscle-up transition','Front lever tuck'],
+Shoulders:['Overhead press','Arnold press','Dumbbell lateral raise','Rear delt fly','Face pulls','Pike push-ups','Handstand push-ups','Wall handstand hold','Planche lean','Handstand shoulder taps'],
+Arms:['EZ-bar curl','Hammer curl','Cable curl','Skull crushers','Rope pressdown','Close-grip bench press','Dips','Ring dips','Bodyweight triceps extension','Banded curl'],
+Core:['Hanging knee raise','Ab wheel rollout','Cable crunch','Dead bug','Pallof press','L-sit hold','Dragon flag','Hollow body hold','Toes-to-bar','V-up'],
+Quads:['Back squat','Front squat','Leg press','Bulgarian split squat','Walking lunge','Goblet squat','Step-up','Shrimp squat','Pistol squat','Sissy squat'],
+Hamstrings:['Romanian deadlift','Good morning','Leg curl','Nordic curl','Single-leg RDL','Stability ball curl','Sliding leg curl','Cossack squat','Hip hinge','Hamstring bridge'],
+Glutes:['Hip thrust','Barbell glute bridge','Cable kickback','Reverse lunge','Sumo squat','Banded abduction','Frog pump','Single-leg hip thrust','Curtsy lunge','Kettlebell swing'],
+Calves:['Standing calf raise','Seated calf raise','Leg press calf raise','Single-leg calf raise','Tibialis raise','Calf pogo','Jump rope','Box jump','Farmer walk on toes','Donkey calf raise'],
+'Hip flexors':['Hanging leg raise','Kneeling hip flexor lift','Mountain climber','Reverse crunch','Marching bridge','Lunge stretch','90/90 switch','Psoas march','Bear crawl','Knee drive'],
+Grip:['Farmer carry','Dead hang','Towel hang','Plate pinch','Wrist curl','Reverse wrist curl','Suitcase carry','Captains of crush','Rice bucket squeeze','Rope climb'],
+Mobility:["World's greatest stretch",'Thoracic rotation','Couch stretch','Shoulder dislocates','Deep squat hold','Jefferson curl','Wrist prep','Scapular pull-up','Ankle rocks','Cat-cow flow']};
+const LIBRARY=Object.entries(GROUP_EXERCISES).flatMap(([group,names])=>names.map((name,index)=>({id:(group+name).toLowerCase().replace(/[^a-z0-9]+/g,'-'),name,group,index,target:group==='Mobility'?30:8})));
+const WEEK_FOCUS=['Foundation','Volume','Technique','Strength','Density','Skill','Overreach','Deload','Test & reflect'];
+const initial=()=>({page:'dashboard',theme:'dark',xp:0,profile:{goal:'Strength',equipment:'Gym',name:'Athlete'},scan:{complete:false,photo:'',selected:[],strongest:[],weakest:[],scores:{}},plan:null,logs:[],daysDone:[],photos:[],measurements:[],weightEntries:[],achievements:[],challengeCode:makeCode(),coachAnswer:''});
+let state=load();let selectedWeek=0;let selectedDay=0;let timer=null;
+function load(){try{return Object.assign(initial(),JSON.parse(localStorage.getItem(KEY)||'{}'));}catch(e){return initial();}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){toast('Storage is full — export a backup and remove large photos.');}}
+function esc(v){return String(v??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#039;'}[c]));}
+function today(){return new Date().toISOString().slice(0,10)}
+function daysAgo(n){const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10)}
+function makeCode(){return Math.random().toString(36).slice(2,8).toUpperCase()+'-'+Math.random().toString(36).slice(2,6).toUpperCase()}
+function hash(s){let h=2166136261;for(let i=0;i<s.length;i++)h=Math.imul(h^s.charCodeAt(i),16777619);return(h>>>0)%100}
+function level(){return Math.floor(state.xp/100)+1}
+function rank(){return ['Seedling','Focused','Rising','Radiant','Limitless','Apex'][Math.min(5,Math.floor(state.xp/500))]}
+function workoutStreak(){const dates=new Set(state.logs.map(x=>x.date));let n=0,d=new Date();while(dates.has(d.toISOString().slice(0,10))){n++;d.setDate(d.getDate()-1)}return n}
+function toast(msg){const el=document.querySelector('#toast');if(!el)return;el.textContent=msg;el.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('show'),2500)}
+function go(page){state.page=page;save();render();document.querySelector('#app').focus()}
+function header(k,t,c,a=''){return `<div class="hero"><div><p class="eyebrow">${k}</p><h1>${t}</h1><p class="lede">${c}</p></div>${a}</div>`}
+function stats(){return `<div class="grid stats"><article class="stat accent"><span class="label">Level</span><strong>${level()}</strong><small>${rank()} · ${state.xp%500}/500 XP</small></article><article class="stat"><span class="label">Workout streak</span><strong>${workoutStreak()} <small>days</small></strong><small>Keep the chain alive</small></article><article class="stat"><span class="label">Total XP</span><strong>${state.xp}</strong><small>Plan bonus included</small></article><article class="stat"><span class="label">Sessions</span><strong>${state.logs.length}</strong><small>${esc(state.profile.goal)} focus</small></article></div>`}
+function streakCard(){const labels=['M','T','W','T','F','S','S'],done=new Set(state.logs.map(x=>x.date));return `<article class="card"><div class="head"><div><p class="eyebrow">Momentum</p><h2>Workout streak</h2></div><span class="chip green">${workoutStreak()} active</span></div><div class="streak-num">${workoutStreak()} <small class="muted">days</small></div><div class="streak-week">${Array.from({length:7},(_,i)=>{const d=daysAgo(6-i);return `<div class="streak-day ${done.has(d)?'done':''}">${labels[i]}<b>${done.has(d)?'✓':'·'}</b></div>`}).join('')}</div></article>`}
+function dashboard(){const ready=state.scan.complete,weak=state.scan.weakest.join(', ')||'not scanned yet',last=state.logs[0];return `<div class="page">${header('YOUR TRAINING SYSTEM','Train with <em>intent.</em>','A private, adaptive training log that lives on this device. Your next useful rep starts here.',`<button class="primary" data-page="${ready?'train':'scan'}">${ready?"Start today's session":"Run body scan"} →</button>`)}${stats()}<div class="two"><div class="grid"><article class="card"><div class="head"><div><p class="eyebrow">${ready?'Personal signal':'Start here'}</p><h2>${ready?'Your body map is ready':'Build your baseline'}</h2></div><span class="chip">${ready?'AI engine complete':'2 min setup'}</span></div><p class="muted">${ready?`Strongest: <b>${esc(state.scan.strongest.join(', '))}</b><br>Priority: <b>${esc(weak)}</b>. Your 9-week plan is tuned to this signal.`:'Upload a photo or select muscle groups. The local deterministic engine creates a starting point — no image ever leaves this browser.'}</p><button class="secondary" data-page="scan">${ready?'Review scan':'Open onboarding'}</button>${ready?'<button class="ghost" data-page="train">View 9-week plan →</button>':''}</article>${last?`<article class="card"><div class="head"><div><p class="eyebrow">Latest session</p><h2>${esc(last.exercise)}</h2></div><span class="chip green">+${last.xp} XP</span></div><p class="muted">${last.sets} sets × ${last.reps} reps${last.weight?` · ${last.weight} kg`:''} · ${last.date}</p><div class="notice">${esc(last.suggestion||'Keep building a clean, repeatable baseline.')}</div></article>`:`<article class="card"><p class="eyebrow">Daily motivation</p><p class="quote">“${QUOTES[new Date().getDate()%QUOTES.length]}”</p></article>`}</div><div class="grid">${streakCard()}<article class="card"><div class="head"><div><p class="eyebrow">Daily signal</p><h2>Coach note</h2></div><span>✦</span></div><p class="muted">${esc(coachText())}</p><button class="ghost" data-page="coach">Ask local coach →</button></article></div></div></div>`}
+function coachText(){if(workoutStreak()>=3)return'Your consistency is doing the heavy lifting. Keep today’s session simple and leave one rep in reserve.';if(state.logs.length)return'You have evidence now. Repeat the movement, then earn a small progression when every target set is clean.';return'You do not need a perfect day. You need one honest next step.'}
+function scanPage(){return `<div class="page">${header('LOCAL BODY SCAN','Know your <em>starting point.</em>','Choose what you notice or add a photo. Symmetry uses a deterministic local engine to create a useful training hypothesis — not a medical assessment.') }<div class="onboard"><article class="card"><div class="head"><div><p class="eyebrow">1 / signal</p><h2>Photo or muscle groups</h2></div><span class="chip">private</span></div><label class="scan-art" for="scan-photo">${state.scan.photo?`<img src="${state.scan.photo}" alt="Local scan preview">`:'◎'}</label><input id="scan-photo" type="file" accept="image/*" capture="user" hidden><p class="muted">Upload or take a body photo, or select muscle groups for the engine to weight. Images remain in localStorage.</p><div class="tags">${GROUPS.map(g=>`<button class="tag ${state.scan.selected.includes(g)?'selected':''}" data-action="select-group" data-group="${esc(g)}">${esc(g)}</button>`).join('')}</div></article><article class="card"><p class="eyebrow">2 / personalize</p><h2>Make the plan yours</h2><div class="form"><div class="field"><label for="goal">Primary goal</label><select id="goal">${GOALS.map(x=>`<option ${state.profile.goal===x?'selected':''}>${x}</option>`).join('')}</select></div><div class="field"><label for="equipment">Equipment</label><select id="equipment">${EQUIPMENT.map(x=>`<option ${state.profile.equipment===x?'selected':''}>${x}</option>`).join('')}</select></div></div><div class="notice" style="margin:18px 0">The engine is local and deterministic: identical inputs produce the same profile. Use it as a planning aid, then trust your real-world feedback.</div><button class="primary" data-action="run-scan">${state.scan.complete?'Re-run local scan':'Generate my plan'} ✦</button>${state.scan.complete?`<div class="scan-result"><div class="card"><span class="muted">3 strongest</span><strong>${esc(state.scan.strongest.join(' · '))}</strong></div><div class="card"><span class="muted">3 to develop</span><strong style="color:var(--green)">${esc(state.scan.weakest.join(' · '))}</strong></div></div>`:''}</article></div></div>`}
+function makePlan(){const weak=state.scan.weakest.length?state.scan.weakest:GROUPS.slice(0,3),goal=state.profile.goal,equip=state.profile.equipment;return{created:today(),goal,equipment:equip,weeks:Array.from({length:9},(_,w)=>({focus:WEEK_FOCUS[w],days:Array.from({length:7},(_,d)=>{if(d===6)return{name:'Recovery / reflect',rest:true,exercises:[]};const group=weak[(w+d)%weak.length],same=LIBRARY.filter(x=>x.group===group),others=LIBRARY.filter(x=>x.group!==group),skill=goal==='Calisthenics'?LIBRARY.find(x=>/muscle-up|planche|front lever|handstand|pull-ups|push-ups/i.test(x.name)):null;const xs=[same[(w+d)%same.length],skill,others[(w*7+d)%others.length],LIBRARY[(w*11+d)%LIBRARY.length]].filter(Boolean),unique=[...new Map(xs.map(x=>[x.id,x])).values()].slice(0,4);return{name:`${group} + ${goal}`,rest:false,exercises:unique.map(x=>({id:x.id,name:x.name,group:x.group,sets:w>5?4:3,reps:x.group==='Mobility'?30:(goal==='Strength'?5:8)}))}}))}))}}
+function plan(){if(!state.plan){state.plan=makePlan();save()}return state.plan}
+function trainPage(){const p=plan(),w=p.weeks[selectedWeek],day=w.days[selectedDay],done=state.daysDone.includes(`${selectedWeek}-${selectedDay}`);return `<div class="page">${header('9-WEEK PROGRAM',`${esc(w.focus)} <em>in motion.</em>`,`A progressive path for ${esc(p.goal)} with ${esc(p.equipment)} equipment. Check off the day, log the work, and let the next suggestion stay small.`)}<div class="tabs">${p.weeks.map((x,i)=>`<button class="secondary ${i===selectedWeek?'active':''}" data-action="week" data-week="${i}">Week ${i+1}</button>`).join('')}</div><div class="plan">${p.weeks.slice(Math.max(0,selectedWeek-1),Math.min(9,selectedWeek+2)).map((x,o)=>{const i=Math.max(0,selectedWeek-1)+o;return `<article class="week ${i===selectedWeek?'current':''}"><span class="week-num">Week ${i+1}</span><h3>${esc(x.focus)}</h3><p class="dim">${x.days.filter(y=>!y.rest).length} training days</p><div class="days">${x.days.map((y,j)=>`<button class="day ${state.daysDone.includes(`${i}-${j}`)?'done':''} ${i===selectedWeek&&j===selectedDay?'active':''}" data-action="day" data-week="${i}" data-day="${j}">${state.daysDone.includes(`${i}-${j}`)?'✓':j+1}</button>`).join('')}</div></article>`}).join('')}</div><div class="two"><article class="card"><div class="head"><div><p class="eyebrow">Week ${selectedWeek+1} / Day ${selectedDay+1}</p><h2>${esc(day.name)}</h2></div><span class="chip ${done?'green':''}">${done?'complete':'in progress'}</span></div>${day.rest?'<div class="empty">Recovery is part of the plan. Take a walk, breathe, and return tomorrow.</div>':`<div>${day.exercises.map(x=>`<div class="exercise"><div><div class="exercise-name">${esc(x.name)}</div><div class="exercise-meta">${esc(x.group)} · target ${x.sets} × ${x.reps}</div></div><input type="number" min="1" value="${x.sets}" data-sets="${x.id}" aria-label="sets"><input type="number" min="1" value="${x.reps}" data-reps="${x.id}" aria-label="reps"><input type="number" min="0" step="0.5" placeholder="kg" data-weight="${x.id}" aria-label="weight"><button class="secondary" data-action="log-plan" data-id="${x.id}">Log</button></div>`).join('')}</div><div class="button-row" style="margin-top:15px"><button class="primary" data-action="complete-day" ${done?'disabled':''}>${done?'Day checked off':'Complete day'} ${done?'✓':'+100 XP'}</button><button class="secondary" data-action="rest">Start rest timer</button></div>`}</article><div class="grid"><article class="card"><p class="eyebrow">REST TIMER</p><div class="timer" id="timer">${timerText()}</div><p class="muted">Use the pause to reset your breathing, not your focus.</p></article><article class="card"><p class="eyebrow">SUPERSETS</p><h2>Pair your work</h2><p class="muted">Log two exercises back-to-back as a superset by adding the same letter in your session notes.</p><button class="ghost" data-action="library">Browse 120-exercise library →</button></article></div></div></div>`}
+function timerText(){if(!state.restUntil)return'01:30';const left=Math.max(0,Math.ceil((state.restUntil-Date.now())/1000));return`${String(Math.floor(left/60)).padStart(2,'0')}:${String(left%60).padStart(2,'0')}`}
+function progress(){const volume=state.logs.reduce((n,x)=>n+(Number(x.sets)||0)*(Number(x.reps)||0)*(Number(x.weight)||1),0),byGroup=GROUPS.map(g=>({g,n:state.logs.filter(x=>x.group===g).reduce((n,x)=>n+(x.sets*x.reps*(x.weight||1)),0)})),max=Math.max(1,...byGroup.map(x=>x.n)),recent=state.weightEntries.slice(-7);return `<div class="page">${header('EVIDENCE OVER EGO','See the <em>signal.</em>','Progress is more than a number. Keep your photos, measurements, bodyweight, and training volume together — privately.')}<div class="two"><article class="card"><div class="head"><div><p class="eyebrow">Training volume</p><h2>${Math.round(volume)} total load</h2></div><span class="chip">${state.logs.length} logs</span></div>${state.logs.length?`<div class="bar-chart">${Array.from({length:Math.min(10,Math.max(1,state.logs.length))},(_,i)=>{const x=state.logs[Math.max(0,state.logs.length-Math.min(10,state.logs.length)+i)],v=(x.sets*x.reps*(x.weight||1));return`<div class="bar" style="height:${Math.max(5,Math.min(100,v/(Math.max(1,volume/100)) ))}%"><em>${Math.round(v)}</em><small>${x.date.slice(5)}</small></div>`}).join('')}</div>`:'<div class="empty">Log a session to see your volume trend.</div>'}</article><article class="card"><p class="eyebrow">Weight trend</p><h2>${recent.length?recent[recent.length-1].weight+' kg':'—'}</h2><p class="muted">Add a measurement below. Trends are stored locally.</p><div class="mini-list">${recent.slice(-4).map(x=>`<div class="list-row"><span>${x.date}</span><b>${x.weight} kg</b></div>`).join('')||'<span class="dim">No weight entries yet.</span>'}</div></article></div><div class="two"><article class="card"><div class="head"><div><p class="eyebrow">Body development map</p><h2>Where the work is landing</h2></div><span class="chip green">local model</span></div><div class="map">${byGroup.map(x=>`<div class="map-cell">${esc(x.g)}<span class="${x.n>max*.66?'l3':x.n>max*.3?'l2':''}" style="width:${Math.max(8,x.n/max*100)}%"></span></div>`).join('')}</div></article><article class="card"><p class="eyebrow">Body measurements</p><form id="measurement-form" class="form"><div class="field"><label>Metric</label><select name="metric"><option>Weight</option><option>Chest</option><option>Waist</option><option>Arm</option><option>Thigh</option></select></div><div class="field"><label>Value (kg/cm)</label><input name="value" type="number" step=".1" required></div><button class="primary" type="submit">Save measurement</button></form><div class="mini-list" style="margin-top:10px">${state.measurements.slice(-3).map(x=>`<div class="list-row"><span>${x.metric}</span><b>${x.value} · ${x.date}</b></div>`).join('')}</div></article></div><div class="two"><article class="card"><div class="head"><div><p class="eyebrow">Progress photos</p><h2>Compare your evidence</h2></div><label class="secondary" for="progress-photo">＋ Add photo</label></div><input id="progress-photo" type="file" accept="image/*" capture="environment" hidden><div class="photo-grid">${state.photos.length?state.photos.slice(-6).map(x=>`<div class="photo"><img src="${x.data}" alt="Progress photo"><time>${x.date}</time></div>`).join(''):'<div class="empty" style="grid-column:1/-1">Your photos stay on this device. Add the first one when you are ready.</div>'}</div>${state.photos.length>1?'<div class="notice" style="margin-top:12px">Comparison view: latest two photos are shown side by side above when your viewport is wide.</div>':''}</article><article class="card"><p class="eyebrow">Exercise rankings</p><h2>Per-movement levels</h2><div class="mini-list">${LIBRARY.filter(x=>state.logs.some(l=>l.exercise===x.name)).slice(0,6).map(x=>{const n=state.logs.filter(l=>l.exercise===x.name).length;return`<div class="list-row"><span>${esc(x.name)}</span><b>Lv ${Math.min(10,n)} · ${n*50} XP</b></div>`}).join('')||'<span class="dim">Log exercises to unlock rankings.</span>'}</div></article></div><article class="card" style="margin-top:14px"><div class="head"><div><p class="eyebrow">Achievements & badges</p><h2>Small wins, made visible</h2></div><span class="chip">${state.achievements.length}/6 unlocked</span></div><div class="badges">${badges().map(b=>`<div class="badge ${b.ok?'unlocked':''}">${b.icon}<small>${b.name}</small></div>`).join('')}</div></article></div>`}
+function badges(){return[{icon:'◎',name:'First signal',ok:state.scan.complete},{icon:'▣',name:'First session',ok:state.logs.length>0},{icon:'ϟ',name:'Seven-day mind',ok:workoutStreak()>=7},{icon:'↗',name:'Volume builder',ok:state.logs.length>=10},{icon:'✦',name:'Plan keeper',ok:state.daysDone.length>=5},{icon:'♢',name:'Evidence set',ok:state.photos.length>=2}]}
+function coach(){return `<div class="page">${header('AI COACH / OFFLINE','Ask for a <em>next step.</em>','No API, no account, no upload. This coach uses deterministic local rules based on your goal, scan, logs, and streak.') }<div class="two"><article class="card"><p class="eyebrow">Local coach</p><h2>What do you need today?</h2><form id="coach-form"><div class="field"><textarea name="question" placeholder="e.g. How should I progress my pull-ups?" required></textarea></div><button class="primary" type="submit">Generate local reply ✦</button></form>${state.coachAnswer?`<div class="notice answer" style="margin-top:16px">${esc(state.coachAnswer)}</div>`:''}</article><article class="card"><p class="eyebrow">Daily motivation</p><p class="quote">“${QUOTES[new Date().getDate()%QUOTES.length]}”</p><p class="muted">Your signal: ${state.scan.complete?esc(state.scan.weakest.join(', ')):'scan not run'} · ${workoutStreak()} day streak.</p></article></div><article class="card" style="margin-top:14px"><p class="eyebrow">Social layer</p><div class="head"><div><h2>Share your session</h2><p class="muted">A copy-ready card for a private group chat or journal.</p></div><span class="chip">leaderboard placeholder</span></div><div class="notice" id="share-copy">${shareText()}</div><div class="button-row" style="margin-top:12px"><button class="primary" data-action="copy-share">Copy workout summary</button><button class="secondary" data-action="copy-code">Challenge ${esc(state.challengeCode)}</button></div></article></div>`}
+function shareText(){const last=state.logs[0];return`SYMMETRY // ${last?`Logged ${last.exercise} · ${last.sets}×${last.reps} · +${last.xp} XP`:'Starting a new training block'}\nLevel ${level()} ${rank()} · ${workoutStreak()} day streak\nChallenge code: ${state.challengeCode}`}
+function settings(){return `<div class="page">${header('CONTROL THE SYSTEM','Your data, <em>your device.</em>','Export a portable JSON backup, import it later, and keep the local-first contract visible.')}<div class="two"><article class="card"><p class="eyebrow">Preferences</p><h2>Profile & appearance</h2><form id="profile-form" class="form"><div class="field"><label>Name</label><input name="name" value="${esc(state.profile.name)}"></div><div class="field"><label>Default goal</label><select name="goal">${GOALS.map(x=>`<option ${state.profile.goal===x?'selected':''}>${x}</option>`).join('')}</select></div><div class="field"><label>Equipment</label><select name="equipment">${EQUIPMENT.map(x=>`<option ${state.profile.equipment===x?'selected':''}>${x}</option>`).join('')}</select></div><button class="primary" type="submit">Save profile</button></form><p class="muted" style="margin-top:15px">Theme: <button class="ghost" data-action="theme">${state.theme==='dark'?'Dark':'Light'} mode ↗</button></p></article><article class="card"><p class="eyebrow">Backup</p><h2>Portable local data</h2><p class="muted">Includes your plan, logs, progress photos, measurements, and settings. Keep the JSON somewhere private.</p><div class="button-row"><button class="primary" data-action="export">Export JSON</button><label class="secondary" for="import-file">Import JSON</label><input id="import-file" type="file" accept="application/json" hidden></div><p class="dim" style="margin-top:15px">Storage key: ${KEY}</p></article></div><article class="card" style="margin-top:14px"><div class="head"><div><p class="eyebrow">Challenge code</p><h2>Train together, locally</h2></div><span class="code">${esc(state.challengeCode)}</span></div><p class="muted">Share this code with a friend to compare your own check-ins later. There is intentionally no remote leaderboard or account service in this build.</p><button class="secondary" data-action="copy-code">Copy challenge code</button></article></div>`}
+function libraryPage(){return `<div class="page">${header('MOVEMENT INDEX','Choose your <em>tool.</em>','A 120-item movement library, including gym staples, home options, and calisthenics skills. Use the plan as a starting point.') }<div class="card"><div class="head"><div><h2>${LIBRARY.length} movements</h2><p class="muted">Every entry is available offline.</p></div><input id="library-search" placeholder="Search movement or muscle" style="max-width:240px;padding:9px;background:var(--s2);border:1px solid var(--line);border-radius:8px;color:var(--text)"></div><div class="library">${LIBRARY.map(x=>`<div class="library-item" data-library="${esc((x.name+' '+x.group).toLowerCase())}"><b>${esc(x.name)}</b><small>${esc(x.group)} · target ${x.target}</small></div>`).join('')}</div></div></div>`}
+function render(){document.body.classList.toggle('light',state.theme==='light');document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x.dataset.page===state.page));const views={dashboard,scan:scanPage,train:trainPage,progress,coach,settings,library:libraryPage};document.querySelector('#app').innerHTML=(views[state.page]||dashboard)();if(state.restUntil)startTimer();}
+function earn(n){state.xp+=n;save()}
+function runScan(){const goal=document.querySelector('#goal')?.value||state.profile.goal,equip=document.querySelector('#equipment')?.value||state.profile.equipment;state.profile.goal=goal;state.profile.equipment=equip;const seed=(state.scan.selected.join('|')||'photo:'+state.scan.photo.length||'default')+'|'+goal+'|'+equip,scores={};GROUPS.forEach(g=>scores[g]=Math.min(99,20+hash(seed+g)+(state.scan.selected.includes(g)?35:0)));const ordered=[...GROUPS].sort((a,b)=>scores[b]-scores[a]);state.scan={...state.scan,complete:true,scores,strongest:ordered.slice(0,3),weakest:ordered.slice(-3).reverse()};state.plan=makePlan();earn(50);toast('Local scan complete — your 9-week plan is ready.');go('train')}
+function logExercise(id){const ex=LIBRARY.find(x=>x.id===id);if(!ex)return;const sets=Number(document.querySelector(`[data-sets="${id}"]`)?.value||3),reps=Number(document.querySelector(`[data-reps="${id}"]`)?.value||ex.target),weight=Number(document.querySelector(`[data-weight="${id}"]`)?.value||0),target=ex.target===30?30:8,hit=reps>=target;const previous=state.logs.find(x=>x.exercise===ex.name),suggestion=hit?(weight?`Next time: try ${Math.round(weight*1.025*10)/10} kg (+2.5%).`:'Next time: add 1 rep to each set.'):'Keep the same load until every target rep is clean.';const xp=40+sets*10+(hit?15:0);state.logs.unshift({id:Date.now(),date:today(),exercise:ex.name,group:ex.group,sets,reps,weight,xp,suggestion,superset:!!previous});earn(xp);checkBadges();toast(`Logged ${ex.name} · +${xp} XP`);render()}
+function checkBadges(){const b=badges();state.achievements=b.filter(x=>x.ok).map(x=>x.name);}
+function completeDay(){const key=`${selectedWeek}-${selectedDay}`;if(!state.daysDone.includes(key)){state.daysDone.push(key);earn(100);checkBadges();toast('Day complete · +100 plan bonus XP');render()}}
+function localCoach(q){const low=q.toLowerCase();if(low.includes('pull')||low.includes('calisthenic'))return`Start with clean scapular pulls, then accumulate quality sets of ${state.profile.goal==='Strength'?'3–5':'6–8'} reps. When every set feels controlled, add one rep per set before adding load. Your current priority is ${state.scan.weakest[0]||'back'}.`;if(low.includes('weight')||low.includes('fat'))return'Use weekly averages, not a single reading. Keep the deficit modest, protect your training quality, and let the trend inform the next adjustment.';if(low.includes('rest')||low.includes('sore'))return'Recovery is training. Keep one or two reps in reserve, use the programmed recovery day, and swap a painful movement for a comfortable pattern.';return`For ${state.profile.goal}, keep the next session focused on ${state.scan.weakest[0]||'your chosen priority'}. Log the work, aim for clean target reps, then use the smallest progression available. You are ${workoutStreak()?`on a ${workoutStreak()}-day streak`:'building the first entry'}.`}
+function copyText(text){if(navigator.clipboard)navigator.clipboard.writeText(text).then(()=>toast('Copied to clipboard.')).catch(()=>toast(text));else{window.prompt('Copy this text',text)}}
+function download(){const a=document.createElement('a');a.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(state));a.download=`symmetry-backup-${today()}.json`;a.click();toast('Backup exported.')}
+function bind(){document.addEventListener('click',e=>{const page=e.target.closest('[data-page]');if(page){e.preventDefault();go(page.dataset.page);return}const a=e.target.closest('[data-action]');if(!a)return;const act=a.dataset.action;if(act==='theme'){state.theme=state.theme==='dark'?'light':'dark';save();render()}if(act==='select-group'){const g=a.dataset.group;state.scan.selected=state.scan.selected.includes(g)?state.scan.selected.filter(x=>x!==g):[...state.scan.selected,g];save();render()}if(act==='run-scan')runScan();if(act==='week'){selectedWeek=Number(a.dataset.week);selectedDay=0;render()}if(act==='day'){selectedWeek=Number(a.dataset.week);selectedDay=Number(a.dataset.day);render()}if(act==='log-plan')logExercise(a.dataset.id);if(act==='complete-day')completeDay();if(act==='rest'){state.restUntil=Date.now()+90000;save();startTimer();toast('Rest timer started.')}if(act==='library')go('library');if(act==='copy-share')copyText(shareText());if(act==='copy-code')copyText(state.challengeCode);if(act==='export')download()});document.addEventListener('change',e=>{if(e.target.id==='scan-photo'&&e.target.files[0]){const r=new FileReader();r.onload=()=>{state.scan.photo=r.result;save();render()};r.readAsDataURL(e.target.files[0])}if(e.target.id==='progress-photo'&&e.target.files[0]){const r=new FileReader();r.onload=()=>{state.photos.push({date:today(),data:r.result});save();toast('Progress photo saved locally.');render()};r.readAsDataURL(e.target.files[0])}if(e.target.id==='import-file'&&e.target.files[0]){const r=new FileReader();r.onload=()=>{try{state=Object.assign(initial(),JSON.parse(r.result));save();render();toast('Backup imported.')}catch(x){toast('That file is not a valid Symmetry backup.')}};r.readAsText(e.target.files[0])}});document.addEventListener('submit',e=>{e.preventDefault();if(e.target.id==='measurement-form'){const f=new FormData(e.target),metric=f.get('metric'),value=Number(f.get('value'));state.measurements.push({date:today(),metric,value});if(metric==='Weight')state.weightEntries.push({date:today(),weight:value});save();toast('Measurement saved locally.');render()}if(e.target.id==='profile-form'){const f=new FormData(e.target);state.profile={...state.profile,name:f.get('name')||'Athlete',goal:f.get('goal'),equipment:f.get('equipment')};state.plan=null;save();toast('Profile saved.');render()}if(e.target.id==='coach-form'){state.coachAnswer=localCoach(new FormData(e.target).get('question')||'');save();render()}});document.addEventListener('input',e=>{if(e.target.id==='library-search'){const q=e.target.value.toLowerCase();document.querySelectorAll('[data-library]').forEach(x=>x.hidden=!x.dataset.library.includes(q))}})}
+function startTimer(){clearInterval(timer);timer=setInterval(()=>{if(!state.restUntil){clearInterval(timer);return}if(Date.now()>=state.restUntil){state.restUntil=null;save();clearInterval(timer);toast('Rest complete — ready when you are.')}const el=document.querySelector('#timer');if(el)el.textContent=timerText()},250)}
+bind();render();
