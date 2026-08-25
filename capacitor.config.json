@@ -1,0 +1,6 @@
+{
+  "appId": "com.symmetry.lockin",
+  "appName": "Symmetry",
+  "webDir": "www",
+  "bundledWebRuntime": false
+}

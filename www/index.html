@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#111827" />
+    <meta name="description" content="Symmetry — your daily glow-up and lock-in tracker." />
+    <title>Symmetry — Lock in, gently.</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="./" aria-label="Symmetry home">
+          <span class="brand-mark">✦</span>
+          <span>symmetry</span>
+        </a>
+        <span class="privacy-pill"><span class="status-dot"></span> saved locally</span>
+      </header>
+
+      <main>
+        <section class="hero" aria-labelledby="welcome-title">
+          <div>
+            <p class="eyebrow">YOUR DAILY RESET</p>
+            <h1 id="welcome-title">Lock in,<br /><em>gently.</em></h1>
+            <p class="hero-copy">Small promises. Repeated daily.<br />A better version of you, in progress.</p>
+          </div>
+          <div class="orbital-art" aria-hidden="true">
+            <div class="orbital-ring ring-one"></div>
+            <div class="orbital-ring ring-two"></div>
+            <div class="orbital-core">✦</div>
+          </div>
+        </section>
+
+        <section class="stats-grid" aria-label="Your progress">
+          <article class="stat-card accent-card">
+            <div class="stat-icon">⚡</div>
+            <div><p>LEVEL</p><strong id="level-value">1</strong></div>
+            <span class="stat-label" id="rank-value">Seedling</span>
+          </article>
+          <article class="stat-card">
+            <div class="stat-icon">🔥</div>
+            <div><p>STREAK</p><strong id="streak-value">0</strong></div>
+            <span class="stat-label">days</span>
+          </article>
+          <article class="stat-card">
+            <div class="stat-icon">✧</div>
+            <div><p>TOTAL XP</p><strong id="xp-value">0</strong></div>
+            <span class="stat-label">points</span>
+          </article>
+        </section>
+
+        <section class="progress-panel" aria-label="Level progress">
+          <div class="progress-heading"><span>Progress to <strong id="next-rank">Focused</strong></span><span id="progress-text">0 / 100 XP</span></div>
+          <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+        </section>
+
+        <section class="checkin-card" aria-labelledby="checkin-title">
+          <div class="section-heading">
+            <div><p class="eyebrow">THE DAILY MOVE</p><h2 id="checkin-title">Show up for yourself.</h2></div>
+            <span class="xp-badge">+100 XP</span>
+          </div>
+          <p id="checkin-message">One intentional action is enough to keep the chain alive.</p>
+          <button class="primary-button" id="checkin-button" type="button">Complete daily check-in <span>→</span></button>
+        </section>
+
+        <section class="coach-card" aria-labelledby="coach-title">
+          <div class="coach-avatar">✦</div>
+          <div><p class="eyebrow">AI COACH · PRIVATE MVP</p><h2 id="coach-title">A note for your journey</h2><p id="coach-message">You do not need a perfect day. You only need one honest next step.</p></div>
+        </section>
+
+        <section class="quests-section" aria-labelledby="quests-title">
+          <div class="section-heading"><div><p class="eyebrow">OPTIONAL BONUSES</p><h2 id="quests-title">Focus quests</h2></div><span class="muted" id="quest-count">0 / 3 done</span></div>
+          <div class="quest-list" id="quest-list"></div>
+        </section>
+      </main>
+
+      <footer><span>symmetry</span><span>Progress, not perfection.</span></footer>
+    </div>
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>
