@@ -21,19 +21,17 @@ jobs:
 
           path = Path('www/main.js')
           text = path.read_text(encoding='utf-8')
-
-          # Remove only escaped brackets in JavaScript code. Brackets inside
-          # quoted strings and regular-expression literals are left untouched.
           out = []
           i = 0
           state = 'code'
           quote = ''
           regex_class = False
           regex_allowed = True
+          slash = chr(92)
           while i < len(text):
               ch = text[i]
               if state == 'code':
-                  if ch in "'\\\"`":
+                  if ch in ("'", '"', '`'):
                       state, quote = 'string', ch
                       out.append(ch)
                       i += 1
@@ -54,7 +52,7 @@ jobs:
                       out.append(ch)
                       i += 1
                       continue
-                  if ch == '\\' and i + 1 < len(text) and text[i + 1] in '[]':
+                  if ch == slash and i + 1 < len(text) and text[i + 1] in '[]':
                       out.append(text[i + 1])
                       i += 2
                       regex_allowed = False
@@ -66,7 +64,7 @@ jobs:
                   continue
               if state == 'string':
                   out.append(ch)
-                  if ch == '\\\\' and i + 1 < len(text):
+                  if ch == slash and i + 1 < len(text):
                       out.append(text[i + 1])
                       i += 2
                       continue
@@ -77,7 +75,7 @@ jobs:
                   continue
               if state == 'regex':
                   out.append(ch)
-                  if ch == '\\\\' and i + 1 < len(text):
+                  if ch == slash and i + 1 < len(text):
                       out.append(text[i + 1])
                       i += 2
                       continue
@@ -93,7 +91,7 @@ jobs:
               if state == 'line_comment':
                   out.append(ch)
                   i += 1
-                  if ch == '\\n':
+                  if ch == chr(10):
                       state, regex_allowed = 'code', True
                   continue
               out.append(ch)
@@ -102,10 +100,10 @@ jobs:
                   state, regex_allowed = 'code', True
 
           text = ''.join(out)
-          marker = 'bind();\\nrender();'
+          marker = 'bind();' + chr(10) + 'render();'
           if marker not in text:
               raise SystemExit('startup marker not found')
-          helper = """function showStartupError(error){const message=error&&error.message?error.message:String(error);const app=document.querySelector('#app');if(app)app.textContent='Symmetry could not start: '+message;}\ntry{bind();render();}catch(error){showStartupError(error);}"""
+          helper = 'function showStartupError(error){const message=error&&error.message?error.message:String(error);const app=document.querySelector(\'#app\');if(app)app.textContent=\'Symmetry could not start: \'+message;}\ntry{bind();render();}catch(error){showStartupError(error);}'
           text = text.replace(marker, helper, 1)
           path.write_text(text, encoding='utf-8')
           Path('.github/workflows/repair-symmetry.yml').unlink()
